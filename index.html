@@ -2,16 +2,1043 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>HSC Horoscope Engine</title>
+  <title>HSC Horoscope Engine – Full Reading</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
-  <!-- styles and script trimmed for brevity in this environment;
-       this placeholder is where the full HTML engine would live. -->
   <style>
-    body { font-family: -apple-system, system-ui, sans-serif; background:#050509; color:#fff; margin:0; padding:16px; }
+    :root {
+      --bg: #050509;
+      --card-bg: #10101a;
+      --card-border: #24243a;
+      --accent: #5c5cff;
+      --text-main: #ffffff;
+      --text-sub: #a0a0b5;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        system-ui, sans-serif;
+      background: radial-gradient(circle at top, #141432 0, #050509 55%);
+      color: var(--text-main);
+    }
+    .app {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .header {
+      padding: 16px 20px 8px;
+      position: relative;
+      z-index: 2;
+    }
+    .title {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .subtitle {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 4px;
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0e0ff;
+      margin: 8px 0 4px;
+    }
+    .input-panel {
+      margin: 0 16px 8px;
+      padding: 10px 12px;
+      background: rgba(5, 5, 20, 0.96);
+      border-radius: 14px;
+      border: 1px solid rgba(80, 80, 140, 0.7);
+      position: relative;
+      z-index: 2;
+    }
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr 0.9fr;
+      gap: 4px 6px;
+      align-items: center;
+    }
+    .input-label {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+    .input-box {
+      width: 100%;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid #2b2b46;
+      background: #070713;
+      color: var(--text-main);
+      font-size: 12px;
+    }
+    .input-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px 8px;
+      margin-top: 4px;
+    }
+    .chip {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #34345a;
+      color: #c0c0e5;
+      background: rgba(10, 10, 30, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .chip input {
+      accent-color: var(--accent);
+    }
+    .update-btn {
+      margin-top: 8px;
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: none;
+      background: var(--accent);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+    }
+    .update-btn:active {
+      transform: scale(0.97);
+    }
+    .horizon-row {
+      display: flex;
+      padding: 10px 16px 6px;
+      gap: 8px;
+      overflow-x: auto;
+      position: relative;
+      z-index: 2;
+    }
+    .horizon-pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid #303046;
+      font-size: 13px;
+      color: #c6c6df;
+      white-space: nowrap;
+      cursor: pointer;
+      background: transparent;
+      outline: none;
+      transition: background 0.15s, border-color 0.15s, color 0.15s,
+        transform 0.1s;
+    }
+    .horizon-pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .horizon-pill:active {
+      transform: scale(0.96);
+    }
+    .mode-badge-container {
+      padding: 0 20px 4px;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .mode-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .mode-badge.sym {
+      background: #1b4332;
+    }
+    .mode-badge.asym {
+      background: #5c1a1a;
+    }
+    .mode-badge-text {
+      margin-right: 6px;
+    }
+    .urgent-pill {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.16);
+      color: #f2c94c;
+      white-space: nowrap;
+    }
+    .cards-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0 16px 8px;
+      position: relative;
+      z-index: 2;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px;
+      margin-top: 12px;
+      border: 1px solid var(--card-border);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.35);
+      transition: border-color 0.15s, transform 0.1s, box-shadow 0.15s;
+      cursor: pointer;
+    }
+    .card.active {
+      border-color: var(--accent);
+      box-shadow: 0 18px 45px rgba(92, 92, 255, 0.35);
+    }
+    .card:active {
+      transform: scale(0.98);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 8px;
+    }
+    .card-element {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    .card-label {
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+    .card-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-sub);
+      margin-top: 2px;
+    }
+    .card-meta-value {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+    .card-prescription {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text-main);
+    }
+    .reading-container {
+      margin: 8px 16px 16px;
+      padding: 12px 14px;
+      background: rgba(8, 8, 22, 0.98);
+      border-radius: 14px;
+      border: 1px solid rgba(100, 100, 160, 0.6);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
+      position: relative;
+      z-index: 2;
+    }
+    .reading-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #ffffff;
+    }
+    .reading-subtitle {
+      font-size: 11px;
+      color: var(--text-sub);
+      margin-bottom: 8px;
+    }
+    .reading-text {
+      font-size: 13px;
+      color: #e2e2ff;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+    .field-layer {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .field-orb {
+      margin-top: 9vh;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 0 35px rgba(255, 255, 255, 0.35);
+      filter: blur(0.1px);
+      transition:
+        background 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.4s ease,
+        opacity 0.3s ease;
+      opacity: 0.6;
+      animation: fieldPulse 4s ease-in-out infinite;
+    }
+    @keyframes fieldPulse {
+      0% { transform: scale(1) rotate(0deg); box-shadow: 0 0 35px rgba(255, 255, 255, 0.35); }
+      50% { transform: scale(1.06) rotate(4deg); box-shadow: 0 0 55px rgba(255, 255, 255, 0.5); }
+      100% { transform: scale(1) rotate(0deg); box-shadow: 0 0 35px rgba(255, 255, 255, 0.35); }
+    }
+    .field-fire {
+      background: radial-gradient(circle at 30% 20%, #ffb19955, #ff084455);
+    }
+    .field-earth {
+      background: radial-gradient(circle at 30% 20%, #e1ffb355, #48b16455);
+    }
+    .field-air {
+      background: radial-gradient(circle at 30% 20%, #9ff1ff55, #3e7eff55);
+    }
+    .field-water {
+      background: radial-gradient(circle at 30% 20%, #b0e6ff55, #225fcf55);
+    }
+    .field-aether {
+      background: radial-gradient(circle at 30% 20%, #f0b7ff55, #7b1ecf55);
+    }
+    .field-field {
+      background: radial-gradient(circle at 30% 20%, #ffe7a255, #f2994a55);
+    }
+    .field-symmetry {
+      transform: scale(1) rotate(0deg) skewX(0deg);
+    }
+    .field-asymmetry {
+      transform: scale(1.08) rotate(6deg) skewX(10deg);
+    }
+    .field-intensity-low {
+      opacity: 0.55;
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.25);
+    }
+    .field-intensity-medium {
+      opacity: 0.8;
+      box-shadow: 0 0 45px rgba(255, 255, 255, 0.4);
+    }
+    .field-intensity-high {
+      opacity: 1;
+      box-shadow: 0 0 65px rgba(255, 255, 255, 0.65);
+    }
+    .footer-note {
+      padding: 4px 16px 8px;
+      font-size: 10px;
+      color: #777892;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>HSC Horoscope Engine</h1>
-  <p>This is a placeholder HTML shell. In your real environment, replace this with the full single-file engine code.</p>
+  <div class="app">
+    <div class="field-layer">
+      <div id="fieldOrb" class="field-orb field-fire field-symmetry field-intensity-low"></div>
+    </div>
+    <div class="header">
+      <h1 class="title">HSC Horoscope Engine</h1>
+      <p class="subtitle">
+        Birth date + Will vectors + shapes + circumstances → detailed reading. All calculations run locally in this file.
+      </p>
+    </div>
+
+    <div class="input-panel">
+      <div class="section-title">1. Birth Data</div>
+      <div style="display:flex; flex-direction:column; gap:4px; margin-bottom:6px;">
+        <label class="input-label">Date of Birth (DD/MM/YYYY or YYYY-MM-DD)</label>
+        <input id="dobInput" class="input-box" placeholder="e.g. 14/08/1991 or 1991-08-14" />
+      </div>
+
+      <div class="section-title">2. Will Vectors (0–10)</div>
+      <div class="input-grid">
+        <div class="input-label"></div>
+        <div class="input-label">Current</div>
+        <div class="input-label">Birth</div>
+
+        <div class="input-label">Drive (Tetrahedron)</div>
+        <input id="driveCurrent" type="number" min="0" max="10" step="0.1" class="input-box" />
+        <input id="driveBirth" type="number" min="0" max="10" step="0.1" class="input-box" />
+
+        <div class="input-label">Clarity (Icosahedron)</div>
+        <input id="clarityCurrent" type="number" min="0" max="10" step="0.1" class="input-box" />
+        <input id="clarityBirth" type="number" min="0" max="10" step="0.1" class="input-box" />
+
+        <div class="input-label">Strategy (Cube)</div>
+        <input id="strategyCurrent" type="number" min="0" max="10" step="0.1" class="input-box" />
+        <input id="strategyBirth" type="number" min="0" max="10" step="0.1" class="input-box" />
+      </div>
+
+      <div class="section-title">3. Circumstances (optional)</div>
+      <div class="input-row">
+        <label class="chip"><input type="checkbox" value="pressure" class="circ-input" /> High pressure / deadlines</label>
+        <label class="chip"><input type="checkbox" value="relationships" class="circ-input" /> Relationship tension</label>
+        <label class="chip"><input type="checkbox" value="health" class="circ-input" /> Health / recovery focus</label>
+        <label class="chip"><input type="checkbox" value="transition" class="circ-input" /> Transition / new phase</label>
+        <label class="chip"><input type="checkbox" value="stuck" class="circ-input" /> Feeling stuck / blocked</label>
+        <label class="chip"><input type="checkbox" value="expansion" class="circ-input" /> Expansion / opportunity</label>
+      </div>
+
+      <button class="update-btn" id="updateBtn">Update Reading</button>
+    </div>
+
+    <div class="horizon-row" id="horizonRow"></div>
+
+    <div class="mode-badge-container">
+      <div id="modeBadge" class="mode-badge sym">
+        <span id="modeText" class="mode-badge-text">Symmetry Mode</span>
+      </div>
+      <div id="urgentPill" class="urgent-pill">
+        Urgent focus: (calculating…)
+      </div>
+    </div>
+
+    <div class="cards-scroll" id="cardsContainer"></div>
+
+    <div class="reading-container">
+      <div class="reading-title">Your Reading</div>
+      <div class="reading-subtitle">
+        Reflective guidance based on your birth date, current state, and selected horizon. This is not a prediction or a substitute for professional advice.
+      </div>
+      <div id="readingText" class="reading-text">
+        Enter your birth date and scores, then tap “Update Reading” to generate a detailed narrative.
+      </div>
+    </div>
+
+    <div class="footer-note">
+      This engine uses simple zodiac math for birth calibration in this offline HTML version. For full modern ephemeris-level precision, you’d connect it to an external astrology library or API.
+    </div>
+  </div>
+
+  <script>
+    const HORIZONS = ["1d","4d","1w","1m","6m","1y","8y"];
+    const HORIZON_LABELS = {
+      "1d":"Today (1 day)",
+      "4d":"Next 4 days",
+      "1w":"Next week",
+      "1m":"Next month",
+      "6m":"Next 6 months",
+      "1y":"Next year",
+      "8y":"Next 8 years"
+    };
+    const HORIZON_SHORT = {
+      "1d":"1D","4d":"4D","1w":"1W","1m":"1M","6m":"6M","1y":"1Y","8y":"8Y"
+    };
+    const ELEMENTS = ["Fire","Earth","Air","Water","Aether","Field"];
+
+    const ACTION_RULES = {
+      Fire:{ high:"Activate Fire (Tetrahedron)", low:"Purify Water (Icosahedron)" },
+      Earth:{ high:"Activate Earth (Cube)", low:"Purify Air (Octahedron)" },
+      Air:{ high:"Activate Air (Octahedron)", low:"Ground Earth (Cube)" },
+      Water:{ high:"Activate Water (Icosahedron)", low:"Ignite Fire (Tetrahedron)" },
+      Aether:{ high:"Activate Aether (Dodecahedron)", low:"Secure Field (Torus/Sphere)" },
+      Field:{ high:"Secure Field (Torus/Sphere)", low:"Expand Aether (Dodecahedron)" }
+    };
+
+    const BASE_HORIZON_FACTORS = {
+      "1d":0.30,"4d":0.45,"1w":0.60,"1m":0.80,"6m":1.00,"1y":1.10,"8y":1.30
+    };
+
+    const ELEMENT_DOMAINS = {
+      Fire:{
+        sphere:"drive, courage, visibility, taking action",
+        advice_up:"lean into intentional movement, take one concrete step you’ve been postponing, and let your body discharge tension through safe physical activity.",
+        advice_down:"simplify your commitments, pause before reacting, and protect your energy by saying ‘no’ where you need to."
+      },
+      Earth:{
+        sphere:"stability, body, resources, daily structures",
+        advice_up:"structure your day with simple routines, prioritize rest and nourishment, and make practical decisions that protect your future self.",
+        advice_down:"allow a bit more flexibility, avoid clinging to rigid expectations, and adjust plans in response to reality."
+      },
+      Air:{
+        sphere:"thoughts, communication, social links, ideas",
+        advice_up:"communicate clearly, write down key thoughts, and be intentional about what information you let in.",
+        advice_down:"slow your mental pace with breath or breaks, step away from overstimulation, and avoid spiraling in analysis or comparison."
+      },
+      Water:{
+        sphere:"emotion, intuition, memory, subtle bonds",
+        advice_up:"acknowledge your feelings, allow gentle emotional release, and seek emotionally safe environments.",
+        advice_down:"notice when you’re absorbing too much from others, set boundaries, and come back to your own body and needs."
+      },
+      Aether:{
+        sphere:"meaning, purpose, connection to unseen patterns",
+        advice_up:"pay attention to recurring themes, create small rituals that ground meaning, and allow quiet time for integration.",
+        advice_down:"avoid chasing signs in everything, bring awareness back to simple actions, and limit how many ‘big questions’ you juggle."
+      },
+      Field:{
+        sphere:"overall field, environment, and subtle background influences",
+        advice_up:"curate your environment intentionally, reduce draining inputs, and choose what surrounds you with care.",
+        advice_down:"avoid isolating completely, let in supportive influences, and allow some openness so your field can refresh."
+      }
+    };
+
+    function numOrNull(x){
+      if(x===null||x===undefined||x==="") return null;
+      const n=parseFloat(x);
+      return isNaN(n)?null:n;
+    }
+
+    function parseDob(str){
+      if(!str) return null;
+      const s=str.trim();
+      let day,month,year;
+      if(s.includes("/")){
+        const parts=s.split("/");
+        if(parts.length!==3) return null;
+        day=parseInt(parts[0],10);
+        month=parseInt(parts[1],10);
+        year=parseInt(parts[2],10);
+      }else if(s.includes("-")){
+        const parts=s.split("-");
+        if(parts.length!==3) return null;
+        year=parseInt(parts[0],10);
+        month=parseInt(parts[1],10);
+        day=parseInt(parts[2],10);
+      }else{
+        return null;
+      }
+      if(isNaN(day)||isNaN(month)||isNaN(year)) return null;
+      return {day,month,year};
+    }
+
+    function getSunSign(day,month){
+      // approximate tropical zodiac based on month/day
+      if((month===3 && day>=21)||(month===4 && day<=19)) return "Aries";
+      if((month===4 && day>=20)||(month===5 && day<=20)) return "Taurus";
+      if((month===5 && day>=21)||(month===6 && day<=20)) return "Gemini";
+      if((month===6 && day>=21)||(month===7 && day<=22)) return "Cancer";
+      if((month===7 && day>=23)||(month===8 && day<=22)) return "Leo";
+      if((month===8 && day>=23)||(month===9 && day<=22)) return "Virgo";
+      if((month===9 && day>=23)||(month===10 && day<=22)) return "Libra";
+      if((month===10 && day>=23)||(month===11 && day<=21)) return "Scorpio";
+      if((month===11 && day>=22)||(month===12 && day<=21)) return "Sagittarius";
+      if((month===12 && day>=22)||(month===1 && day<=19)) return "Capricorn";
+      if((month===1 && day>=20)||(month===2 && day<=18)) return "Aquarius";
+      if((month===2 && day>=19)||(month===3 && day<=20)) return "Pisces";
+      return null;
+    }
+
+    function elementOfSign(sign){
+      if(["Aries","Leo","Sagittarius"].includes(sign)) return "Fire";
+      if(["Taurus","Virgo","Capricorn"].includes(sign)) return "Earth";
+      if(["Gemini","Libra","Aquarius"].includes(sign)) return "Air";
+      if(["Cancer","Scorpio","Pisces"].includes(sign)) return "Water";
+      return null;
+    }
+
+    function buildNatalProfileFromSign(sign){
+      // start roughly balanced, then tilt toward sign element
+      let natal={Fire:0.2,Earth:0.2,Air:0.2,Water:0.2,Aether:0.1,Field:0.1};
+      const el=elementOfSign(sign);
+      if(el){
+        natal[el]+=0.1;
+        // normalize back to 1
+        const total=natal.Fire+natal.Earth+natal.Air+natal.Water+natal.Aether+natal.Field;
+        Object.keys(natal).forEach(k=>{ natal[k]=natal[k]/total; });
+      }
+      natal.Total=1;
+      return natal;
+    }
+
+    function computeHSC(inputs){
+      const driveCur=numOrNull(inputs.driveCurrent);
+      const driveBirth=numOrNull(inputs.driveBirth);
+      const clarityCur=numOrNull(inputs.clarityCurrent);
+      const clarityBirth=numOrNull(inputs.clarityBirth);
+      const strategyCur=numOrNull(inputs.strategyCurrent);
+      const strategyBirth=numOrNull(inputs.strategyBirth);
+
+      function delta(cur,birth){
+        if(cur==null||birth==null) return null;
+        return cur-birth;
+      }
+      function tensionClass(D){
+        if(D==null) return "WAITING";
+        return D<0?"TRANSCENDENCE":"CHALLENGE";
+      }
+      function status(cur){
+        if(cur==null) return "WAITING";
+        if(cur<7.5) return "STRUCTURAL CONFLICT";
+        return "COHERENCE INTEGRATED";
+      }
+      function multiplier(t){
+        if(t==="CHALLENGE") return 1.5;
+        if(t==="TRANSCENDENCE") return 0.5;
+        return 1.0;
+      }
+
+      const dDrive=delta(driveCur,driveBirth);
+      const dClarity=delta(clarityCur,clarityBirth);
+      const dStrategy=delta(strategyCur,strategyBirth);
+
+      const tDrive=tensionClass(dDrive);
+      const tClarity=tensionClass(dClarity);
+      const tStrategy=tensionClass(dStrategy);
+
+      const sDrive=status(driveCur);
+      const sClarity=status(clarityCur);
+      const sStrategy=status(strategyCur);
+
+      const mDrive=multiplier(tDrive);
+      const mClarity=multiplier(tClarity);
+      const mStrategy=multiplier(tStrategy);
+
+      let mag=null;
+      if(dDrive!=null && dClarity!=null && dStrategy!=null){
+        mag=Math.sqrt(dDrive*dDrive+dClarity*dClarity+dStrategy*dStrategy);
+      }
+
+      const scores=[
+        {key:"Drive",value:driveCur},
+        {key:"Clarity",value:clarityCur},
+        {key:"Strategy",value:strategyCur}
+      ].filter(x=>x.value!=null);
+
+      let weakestElement=null, weakestScore=null;
+      if(scores.length>0){
+        scores.sort((a,b)=>a.value-b.value);
+        weakestElement=scores[0].key;
+        weakestScore=scores[0].value;
+      }
+
+      let mandatoryFreq=null;
+      if(weakestElement==="Drive") mandatoryFreq=396;
+      else if(weakestElement==="Clarity") mandatoryFreq=417;
+      else if(weakestElement==="Strategy") mandatoryFreq=174;
+
+      return {
+        drive:{current:driveCur,birth:driveBirth,D:dDrive,tensionClass:tDrive,status:sDrive,multiplier:mDrive},
+        clarity:{current:clarityCur,birth:clarityBirth,D:dClarity,tensionClass:tClarity,status:sClarity,multiplier:mClarity},
+        strategy:{current:strategyCur,birth:strategyBirth,D:dStrategy,tensionClass:tStrategy,status:sStrategy,multiplier:mStrategy},
+        magnitude:mag,
+        weakestElement,
+        weakestScore,
+        mandatoryFrequency:mandatoryFreq
+      };
+    }
+
+    function computeElementDeltas(natal,current){
+      const deltas={}, actions={};
+      ELEMENTS.forEach(el=>{
+        const d=(natal[el]||0)-(current[el]||0);
+        deltas[el]=d;
+        if(d>0.15) actions[el]=ACTION_RULES[el].high;
+        else if(d<-0.15) actions[el]=ACTION_RULES[el].low;
+        else actions[el]="Maintain Coherence";
+      });
+      const absVals=ELEMENTS.map(el=>Math.abs(deltas[el]));
+      const maxAbs=Math.max.apply(null,absVals);
+      let urgentElement="Fire";
+      ELEMENTS.forEach(el=>{
+        if(Math.abs(deltas[el])===maxAbs) urgentElement=el;
+      });
+      return {deltas, actions, urgentElement, urgentAction:actions[urgentElement]};
+    }
+
+    function computeHoroscopeTimeline(natal,current){
+      const {deltas,actions,urgentElement,urgentAction}=computeElementDeltas(natal,current);
+      const elements = ELEMENTS.map(el=>{
+        const baseDelta=deltas[el];
+        const baseAction=actions[el];
+        const horizons=HORIZONS.map(h=>{
+          const factor=BASE_HORIZON_FACTORS[h];
+          const projectedDelta=baseDelta*factor;
+          const absVal=Math.abs(projectedDelta);
+          let intensity="low";
+          if(absVal>=0.25) intensity="high";
+          else if(absVal>=0.1) intensity="medium";
+          return {horizon:h, projectedDelta, action:baseAction, intensity};
+        });
+        return {element:el, horizons};
+      });
+      return {elements, urgentNow:{element:urgentElement, prescription:urgentAction}};
+    }
+
+    function getSelectedCircumstances(){
+      const nodes=document.querySelectorAll(".circ-input");
+      const tags=[];
+      nodes.forEach(n=>{ if(n.checked) tags.push(n.value); });
+      return tags;
+    }
+
+    function generateReading(selectedHorizon,horizonReadings,finalMode,timeline,hsc,circumstances,sunSign,signElement){
+      if(!horizonReadings.length){
+        return "No data yet. Enter your birth date and Will scores, then tap “Update Reading”.";
+      }
+
+      const modeSentence =
+        finalMode==="symmetry"
+        ? "Your field is relatively symmetrical right now. There are movements and shifts, but they are mostly within a range that responds well to conscious attention and small course corrections."
+        : "Your field is in an asymmetrical phase. This doesn’t mean you’re off track; it means life is actively reconfiguring something and asking you to participate rather than stay on autopilot.";
+
+      // strongest reading for this horizon
+      let strongest=horizonReadings[0];
+      horizonReadings.forEach(r=>{
+        if(Math.abs(r.delta)>Math.abs(strongest.delta)) strongest=r;
+      });
+
+      const el=strongest.element;
+      const trend=strongest.trend;
+      const intensity=strongest.intensity;
+      const deltaPercent=(strongest.delta*100).toFixed(1);
+      const domain=ELEMENT_DOMAINS[el];
+      const horizonPhrase=HORIZON_LABELS[selectedHorizon] || "this period";
+
+      let coreSignSentence="";
+      if(sunSign && signElement){
+        coreSignSentence =
+          `Your birth date places your Sun in ${sunSign}, which leans your core pattern toward ${signElement} energy. ` +
+          `This colors your default way of moving through the world: how you pursue what matters, how you respond to change, and how you seek stability.`;
+      }
+
+      let directionSentence="";
+      if(trend==="balanced"){
+        directionSentence =
+          `${el} is relatively balanced for ${horizonPhrase}. In practical terms, this domain of ${domain.sphere} is unlikely to be the main source of friction; it can act as a supportive backdrop while other areas shift.`;
+      }else if(trend==="under-expressed"){
+        directionSentence =
+          `For ${horizonPhrase}, ${el} appears under-expressed (≈ ${deltaPercent}% below your natal pattern). Life may highlight situations where qualities of ${domain.sphere} feel missing, insufficient, or delayed. ` +
+          `Rather than a punishment, this is an invitation to deliberately amplify these qualities through small, repeated choices.`;
+      }else{
+        directionSentence =
+          `For ${horizonPhrase}, ${el} is over-expressed (≈ ${deltaPercent}% above your natal pattern). Themes of ${domain.sphere} may feel inflamed, noisy, or dominating your attention. ` +
+          `The system is showing you where intensity needs to be channeled consciously instead of allowed to scatter or burn out.`;
+      }
+
+      let intensitySentence="";
+      if(intensity==="low"){
+        intensitySentence =
+          "The signal intensity is low. Expect subtle echoes rather than loud events: recurring thoughts, minor frictions, or faint cravings for change. If you respond early, you often prevent larger waves later.";
+      }else if(intensity==="medium"){
+        intensitySentence =
+          "The signal intensity is medium. Patterns are likely to repeat until you acknowledge and work with them. You may notice certain topics keep coming up in conversations, dreams, or daily logistics.";
+      }else{
+        intensitySentence =
+          "The signal intensity is high. This theme is front-and-center and harder to ignore. In this phase, slowing down your reflexes and choosing one grounded response at a time becomes a core survival skill.";
+      }
+
+      const pres=strongest.prescription;
+      let movementSentence=`The corrective instruction here is encoded as: “${pres}”. Translated into lived experience, this means `;
+      if(trend==="under-expressed") movementSentence+=domain.advice_up;
+      else if(trend==="over-expressed") movementSentence+=domain.advice_down;
+      else movementSentence+="strengthening what already works with gentle, consistent practice instead of drastic overhauls.";
+
+      // HSC explanation
+      const hscLines=[];
+      if(hsc.magnitude!=null){
+        hscLines.push(
+          `Your current Will Deficit Magnitude (|V|) is approximately ${hsc.magnitude.toFixed(2)}. ` +
+          "This measures how far your present Drive–Clarity–Strategy vector has drifted from your birth challenge pattern."
+        );
+      }
+
+      function describeComponent(name,info,shape){
+        if(info.current==null || info.birth==null) return;
+        const diff=info.D!=null ? info.D.toFixed(2) : "0.00";
+        let t=`• ${name} (${shape}) – current ${info.current.toFixed(1)} vs birth ${info.birth.toFixed(1)} (Δ ≈ ${diff}). `;
+        if(info.status==="WAITING"){
+          t+="This axis is still loading; more data or time is needed before a clear pattern emerges.";
+        }else if(info.status==="STRUCTURAL CONFLICT"){
+          if(info.tensionClass==="CHALLENGE"){
+            t+="This is in structural conflict and presenting as a challenge. Expect repeated situations that force you to confront and rebuild this capacity.";
+          }else if(info.tensionClass==="TRANSCENDENCE"){
+            t+="This is in structural conflict but tilted toward transcendence. You may be outgrowing an old pattern here, even if it feels uncomfortable while it happens.";
+          }
+        }else if(info.status==="COHERENCE INTEGRATED"){
+          if(info.tensionClass==="CHALLENGE"){
+            t+="This area is mostly coherent but still carries growth edges. You can function here, but life may keep refining how you express this component.";
+          }else if(info.tensionClass==="TRANSCENDENCE"){
+            t+="This area is relatively integrated and can become a strength you use to stabilize the rest of your system.";
+          }
+        }
+        hscLines.push(t);
+      }
+
+      describeComponent("Drive",hsc.drive,"Tetrahedron");
+      describeComponent("Clarity",hsc.clarity,"Icosahedron");
+      describeComponent("Strategy",hsc.strategy,"Cube");
+
+      if(hsc.weakestElement && hsc.weakestScore!=null){
+        let freqText="";
+        if(hsc.mandatoryFrequency!=null){
+          freqText=` Symbolically, this axis resonates with a priority tone near ${hsc.mandatoryFrequency} Hz. You can treat that as a reminder to apply repeated, focused practice here rather than expecting instant resolution.`;
+        }
+        hscLines.push(
+          `The most sensitive structural link at present is your ${hsc.weakestElement} component (≈ ${hsc.weakestScore.toFixed(1)}).`+freqText
+        );
+      }
+
+      // Circumstance layer
+      const circSentences=[];
+      if(circumstances.length>0){
+        circSentences.push("You’ve indicated that the following circumstances are active:");
+        circSentences.push("– "+circumstances.join(", ")+".");
+        if(circumstances.includes("pressure")){
+          circSentences.push(
+            "High pressure and deadlines tend to amplify Fire/Earth themes: urgency, effort, responsibility. Notice where you assume everything must happen at once; experiment with sequencing and delegation."
+          );
+        }
+        if(circumstances.includes("relationships")){
+          circSentences.push(
+            "Relationship tension activates Water/Air: emotions and communication. This is a window to practice honest expression without collapsing your own boundaries."
+          );
+        }
+        if(circumstances.includes("health")){
+          circSentences.push(
+            "Health and recovery highlight Earth/Field: body and environment. Small changes in sleep, food, light, and sound can have bigger effects than dramatic resolutions right now."
+          );
+        }
+        if(circumstances.includes("transition")){
+          circSentences.push(
+            "Transitions stir Fire/Aether: beginnings and meaning. Let yourself feel both excitement and grief; both are signs that parts of you are rearranging, not failing."
+          );
+        }
+        if(circumstances.includes("stuck")){
+          circSentences.push(
+            "Feeling stuck often reflects Earth/Water stagnation. Rather than forcing a leap, try the smallest possible movement—one email, one conversation, one cleared corner of a room."
+          );
+        }
+        if(circumstances.includes("expansion")){
+          circSentences.push(
+            "Expansion energizes Fire/Air. As opportunities appear, it becomes essential to choose which ones actually align with your nervous system capacity, not just your ambition."
+          );
+        }
+      }
+
+      let urgentSentence="";
+      if(timeline.urgentNow && timeline.urgentNow.element){
+        urgentSentence =
+          `Across all elements, the most sensitive axis in this cycle is ${timeline.urgentNow.element}. ` +
+          "When you are unsure what to do next, let this element guide you by asking: “What is one honest, small adjustment I can make here today?”";
+      }
+
+      // Closing practical suggestions
+      const closing =
+        "In practical terms, the point of this map is not to label you as ‘fixed’ or ‘broken’, " +
+        "but to give you a way to see where life is already working on you. If you use this information " +
+        "to make kinder, more deliberate choices—especially in the domains highlighted above—you effectively " +
+        "turn the current asymmetries into training ground instead of random chaos.";
+
+      return [
+        coreSignSentence,
+        "",
+        modeSentence,
+        "",
+        directionSentence,
+        intensitySentence,
+        "",
+        movementSentence,
+        "",
+        "HSC Vector Status:",
+        hscLines.join("\n"),
+        "",
+        "Circumstances and Field Effects:",
+        circSentences.length ? circSentences.join("\n") : "No specific circumstances were flagged, so the field is being read primarily from your internal vectors.",
+        "",
+        urgentSentence,
+        "",
+        closing
+      ].filter(Boolean).join("\n");
+    }
+
+    function updateFieldVisual(mode,reading){
+      const orb=document.getElementById("fieldOrb");
+      orb.className="field-orb";
+      const el = reading ? reading.element : "Fire";
+      if(el==="Fire") orb.classList.add("field-fire");
+      else if(el==="Earth") orb.classList.add("field-earth");
+      else if(el==="Air") orb.classList.add("field-air");
+      else if(el==="Water") orb.classList.add("field-water");
+      else if(el==="Aether") orb.classList.add("field-aether");
+      else if(el==="Field") orb.classList.add("field-field");
+      if(mode==="symmetry") orb.classList.add("field-symmetry");
+      else orb.classList.add("field-asymmetry");
+      const intensity = reading ? reading.intensity : "low";
+      if(intensity==="low") orb.classList.add("field-intensity-low");
+      else if(intensity==="medium") orb.classList.add("field-intensity-medium");
+      else if(intensity==="high") orb.classList.add("field-intensity-high");
+    }
+
+    let selectedHorizon="1d";
+    let selectedElement=null;
+    let currentTimeline=computeHoroscopeTimeline(buildNatalProfileFromSign("Aries"), {Fire:0.15,Earth:0.24,Air:0.18,Water:0.22,Aether:0.11,Field:0.10,Total:1});
+    let currentHSC=computeHSC({}); // empty initial
+    let currentSunSign=null;
+    let currentSignElement=null;
+
+    const horizonRow=document.getElementById("horizonRow");
+    const cardsContainer=document.getElementById("cardsContainer");
+    const modeBadge=document.getElementById("modeBadge");
+    const modeText=document.getElementById("modeText");
+    const urgentPill=document.getElementById("urgentPill");
+    const readingText=document.getElementById("readingText");
+
+    function renderHorizons(){
+      horizonRow.innerHTML="";
+      HORIZONS.forEach(h=>{
+        const btn=document.createElement("button");
+        btn.className="horizon-pill"+(h===selectedHorizon?" active":"");
+        btn.textContent=HORIZON_SHORT[h];
+        btn.addEventListener("click",()=>{
+          selectedHorizon=h;
+          renderHorizons();
+          renderCards();
+        });
+        horizonRow.appendChild(btn);
+      });
+    }
+
+    function renderCards(){
+      cardsContainer.innerHTML="";
+      const horizonReadings=[];
+      currentTimeline.elements.forEach(elTimeline=>{
+        const hData=elTimeline.horizons.find(h=>h.horizon===selectedHorizon);
+        if(!hData) return;
+        let trend="balanced";
+        if(hData.projectedDelta>0) trend="under-expressed";
+        else if(hData.projectedDelta<0) trend="over-expressed";
+        horizonReadings.push({
+          element:elTimeline.element,
+          label:HORIZON_LABELS[selectedHorizon],
+          intensity:hData.intensity,
+          trend,
+          prescription:hData.action,
+          delta:hData.projectedDelta
+        });
+      });
+
+      const anyMediumOrHigh=horizonReadings.some(r=>r.intensity==="medium"||r.intensity==="high");
+      let symmetryFromElements= anyMediumOrHigh ? "asymmetry" : "symmetry";
+
+      let symmetryFromHSC="symmetry";
+      if(currentHSC.magnitude!=null){
+        const m=currentHSC.magnitude;
+        if(m>2.7) symmetryFromHSC="asymmetry";
+      }
+
+      const finalMode=(symmetryFromElements==="asymmetry" || symmetryFromHSC==="asymmetry")?"asymmetry":"symmetry";
+      modeBadge.className="mode-badge "+(finalMode==="symmetry"?"sym":"asym");
+      modeText.textContent = finalMode==="symmetry"?"Symmetry Mode":"Asymmetry Mode";
+
+      if(currentTimeline.urgentNow && currentTimeline.urgentNow.element){
+        urgentPill.textContent="Urgent focus: "+currentTimeline.urgentNow.element;
+      }else{
+        urgentPill.textContent="Urgent focus: (none)";
+      }
+
+      let target=horizonReadings[0]||null;
+      if(selectedElement){
+        const found=horizonReadings.find(r=>r.element===selectedElement);
+        if(found) target=found;
+      }
+
+      if(target){
+        updateFieldVisual(finalMode,target);
+      }
+
+      const circumstances=getSelectedCircumstances();
+      const reading=generateReading(
+        selectedHorizon,
+        horizonReadings,
+        finalMode,
+        currentTimeline,
+        currentHSC,
+        circumstances,
+        currentSunSign,
+        currentSignElement
+      );
+      readingText.textContent=reading;
+
+      horizonReadings.forEach(reading=>{
+        const card=document.createElement("div");
+        card.className="card"+(reading.element===selectedElement?" active":"");
+        card.addEventListener("click",()=>{
+          if(selectedElement===reading.element) selectedElement=null;
+          else selectedElement=reading.element;
+          renderCards();
+        });
+        const header=document.createElement("div");
+        header.className="card-header";
+        const elTitle=document.createElement("div");
+        elTitle.className="card-element";
+        elTitle.textContent=reading.element;
+        header.appendChild(elTitle);
+        const label=document.createElement("div");
+        label.className="card-label";
+        label.textContent=reading.label;
+        header.appendChild(label);
+        card.appendChild(header);
+
+        const row=document.createElement("div");
+        row.className="card-row";
+        const trend=document.createElement("div");
+        trend.className="card-meta";
+        trend.innerHTML='Trend: <span class="card-meta-value">'+reading.trend+'</span>';
+        const intensity=document.createElement("div");
+        intensity.className="card-meta";
+        intensity.innerHTML='Intensity: <span class="card-meta-value">'+reading.intensity.toUpperCase()+'</span>';
+        row.appendChild(trend);
+        row.appendChild(intensity);
+        card.appendChild(row);
+
+        const delta=document.createElement("div");
+        delta.className="card-meta";
+        delta.innerHTML='Delta: <span class="card-meta-value">'+(reading.delta*100).toFixed(1)+'%</span>';
+        card.appendChild(delta);
+
+        const pres=document.createElement("div");
+        pres.className="card-prescription";
+        pres.textContent=reading.prescription;
+        card.appendChild(pres);
+
+        cardsContainer.appendChild(card);
+      });
+    }
+
+    function readInputsAndRecompute(){
+      const dobStr=document.getElementById("dobInput").value;
+      const parsed=parseDob(dobStr);
+      if(!parsed){
+        alert("Please enter your birth date as DD/MM/YYYY or YYYY-MM-DD.");
+        return;
+      }
+      const sunSign=getSunSign(parsed.day,parsed.month);
+      if(!sunSign){
+        alert("Birth date could not be mapped to a zodiac range. Please double-check the date.");
+        return;
+      }
+      currentSunSign=sunSign;
+      currentSignElement=elementOfSign(sunSign);
+
+      const natal=buildNatalProfileFromSign(sunSign);
+      const current={Fire:0.15,Earth:0.24,Air:0.18,Water:0.22,Aether:0.11,Field:0.10,Total:1};
+
+      const inputs={
+        driveCurrent:document.getElementById("driveCurrent").value,
+        driveBirth:document.getElementById("driveBirth").value,
+        clarityCurrent:document.getElementById("clarityCurrent").value,
+        clarityBirth:document.getElementById("clarityBirth").value,
+        strategyCurrent:document.getElementById("strategyCurrent").value,
+        strategyBirth:document.getElementById("strategyBirth").value
+      };
+      currentHSC=computeHSC(inputs);
+      currentTimeline=computeHoroscopeTimeline(natal,current);
+      renderCards();
+    }
+
+    document.getElementById("updateBtn").addEventListener("click",readInputsAndRecompute);
+    renderHorizons();
+    renderCards();
+  </script>
 </body>
 </html>
